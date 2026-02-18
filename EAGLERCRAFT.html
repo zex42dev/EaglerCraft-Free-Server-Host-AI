@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EaglerHost — Free Minecraft Hosting</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0b10;--s1:#12141c;--s2:#181b26;--s3:#1e2230;--bd:#252a3d;--bd2:#2f3548;--acc:#5b8eff;--acc2:#7c5dfa;--grn:#1fd670;--red:#ff4d66;--ylw:#ffba2e;--cyn:#1dd4e8;--txt:#e2e6f2;--mut:#525c7c;--mut2:#7d8aae;--f:'Outfit',sans-serif;--m:'JetBrains Mono',monospace;--r:11px}
+*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--txt);font-family:var(--f);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+input,textarea,select,button{font-family:var(--f)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.25)}}
+
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.08}
+.o1{width:550px;height:550px;background:#5b8eff;top:-140px;left:-90px;animation:o1 18s ease-in-out infinite}
+.o2{width:400px;height:400px;background:#7c5dfa;bottom:-100px;right:-70px;animation:o2 22s ease-in-out infinite}
+.o3{width:280px;height:280px;background:#1fd670;top:48%;left:48%;animation:o3 14s ease-in-out infinite}
+@keyframes o1{0%,100%{transform:translate(0,0)}50%{transform:translate(45px,35px)}}
+@keyframes o2{0%,100%{transform:translate(0,0)}50%{transform:translate(-35px,-25px)}}
+@keyframes o3{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,-50%) scale(1.12)}}
+
+.page{display:none;position:relative;z-index:1;min-height:100vh}.page.on{display:block}
+
+/* AUTH */
+#pg-auth{display:flex;align-items:center;justify-content:center;padding:40px 20px}
+.auth-w{width:100%;max-width:400px;animation:fadeUp .55s cubic-bezier(.16,1,.3,1) both}
+.auth-logo{text-align:center;margin-bottom:28px}
+.aic{width:48px;height:48px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:13px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px;box-shadow:0 8px 26px rgba(91,142,255,.3)}
+.auth-logo h1{font-size:26px;font-weight:900;letter-spacing:-.4px}
+.auth-logo p{font-size:13px;color:var(--mut2);margin-top:3px}
+.auth-box{background:var(--s1);border:1px solid var(--bd);border-radius:18px;padding:30px;box-shadow:0 20px 55px rgba(0,0,0,.35)}
+.auth-tabs{display:flex;gap:0;margin-bottom:24px;background:var(--s2);border-radius:var(--r);padding:3px}
+.auth-tab{flex:1;padding:8px;border:none;background:transparent;color:var(--mut2);font-size:13px;font-weight:700;cursor:pointer;border-radius:9px;transition:all .18s}
+.auth-tab.on{background:var(--s1);color:var(--txt);box-shadow:0 2px 7px rgba(0,0,0,.18)}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.fg label{font-size:12px;font-weight:700;color:var(--mut2)}
+.fi{background:var(--s2);border:1.5px solid var(--bd2);border-radius:var(--r);padding:10px 13px;font-size:13px;color:var(--txt);outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
+.fi:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(91,142,255,.11)}
+.fi.err{border-color:var(--red)}
+.auth-err{background:rgba(255,77,102,.08);border:1px solid rgba(255,77,102,.24);border-radius:var(--r);padding:9px 13px;font-size:12px;color:var(--red);margin-bottom:12px;display:none}
+.auth-err.on{display:block}
+.btn-full{width:100%;padding:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;margin-top:3px}
+.btn-full:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(91,142,255,.33)}
+.btn-full:active{transform:none}
+.btn-full:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.auth-note{text-align:center;font-size:11px;color:var(--mut);margin-top:12px}
+.auth-note span{color:var(--acc);cursor:pointer;font-weight:600}
+
+/* HOME */
+#pg-home{padding:0}
+.topbar{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 30px;height:56px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
+@media(max-width:680px){.topbar{padding:0 15px}}
+.topbar-logo{font-size:17px;font-weight:900;letter-spacing:-.25px;display:flex;align-items:center;gap:8px}
+.tic{width:28px;height:28px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.user-chip{display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--bd2);border-radius:100px;padding:4px 12px 4px 6px;font-size:12px;font-weight:600;cursor:pointer;transition:border-color .2s}
+.user-chip:hover{border-color:var(--bd)}
+.uav{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+.btn-logout{background:none;border:1px solid var(--bd2);color:var(--mut2);border-radius:var(--r);padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+.home-body{padding:32px 30px;max-width:1040px;margin:0 auto}
+@media(max-width:680px){.home-body{padding:18px 15px}}
+.home-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:14px;flex-wrap:wrap}
+.home-hd h2{font-size:24px;font-weight:900;letter-spacing:-.35px}
+.home-hd p{font-size:13px;color:var(--mut2);margin-top:3px}
+.stats-r{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
+.sp{background:var(--s1);border:1px solid var(--bd);border-radius:11px;padding:13px 18px;display:flex;align-items:center;gap:10px}
+.sp .ic{font-size:20px}
+.sp .sv{font-size:20px;font-weight:900}
+.sp .sl{font-size:11px;color:var(--mut2);font-weight:600;margin-top:1px}
+.sec-h{font-size:11px;font-weight:800;letter-spacing:1.4px;color:var(--mut);text-transform:uppercase;margin-bottom:12px}
+.srv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:28px}
+.sc{background:var(--s1);border:1px solid var(--bd);border-radius:15px;padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.sc:hover{border-color:var(--bd2);transform:translateY(-2px);box-shadow:0 7px 26px rgba(0,0,0,.18)}
+.sc.sel{border-color:var(--acc);box-shadow:0 0 0 2px rgba(91,142,255,.14)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--acc),var(--acc2));opacity:0;transition:opacity .2s}
+.sc:hover::before,.sc.sel::before{opacity:1}
+.sst{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;margin-bottom:10px}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sdot.on{background:var(--grn);box-shadow:0 0 5px var(--grn);animation:pulse 2s ease-in-out infinite}
+.sdot.off{background:var(--mut)}
+.sn{font-size:16px;font-weight:800;margin-bottom:3px;letter-spacing:-.18px}
+.sa{font-family:var(--m);font-size:10px;color:var(--mut2);margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sm{display:flex;gap:12px;font-size:11px;color:var(--mut2)}
+.sm span{display:flex;align-items:center;gap:3px;font-weight:600}
+.add-sc{background:transparent;border:2px dashed var(--bd2);border-radius:15px;padding:18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:138px;color:var(--mut);text-align:center}
+.add-sc:hover{border-color:var(--acc);color:var(--acc);background:rgba(91,142,255,.03)}
+.add-sc .aic2{font-size:26px}
+.add-sc p{font-size:13px;font-weight:600}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(10,11,16,.8);backdrop-filter:blur(7px);z-index:100;display:none;align-items:center;justify-content:center;padding:18px}
+.modal-bg.on{display:flex}
+.modal{background:var(--s1);border:1px solid var(--bd);border-radius:18px;padding:28px;width:100%;max-width:460px;animation:fadeUp .28s ease both;box-shadow:0 22px 70px rgba(0,0,0,.45);position:relative}
+.modal-h{font-size:18px;font-weight:900;margin-bottom:5px;letter-spacing:-.25px}
+.modal-s{font-size:13px;color:var(--mut2);margin-bottom:20px}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--mut);font-size:18px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all .2s}
+.modal-close:hover{background:var(--s2);color:var(--txt)}
+.nfr{display:flex;align-items:center;background:var(--s2);border:1.5px solid var(--bd2);border-radius:var(--r);overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.nfr:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px rgba(91,142,255,.1)}
+.nfr.ok{border-color:var(--grn)}.nfr.err{border-color:var(--red)}
+.npfx{padding:0 0 0 12px;font-family:var(--m);font-size:11px;color:var(--mut);white-space:nowrap;font-weight:500}
+#modal-sni{flex:1;background:transparent;border:none;outline:none;padding:11px 12px;font-size:13px;font-family:var(--m);color:var(--txt);font-weight:700}
+.nh{font-size:11px;font-weight:600;margin-top:6px;height:14px;padding-left:2px}
+.nh-ok{color:var(--grn)}.nh-err{color:var(--red)}.nh-chk{color:var(--mut)}
+.honest{background:rgba(255,186,46,.05);border:1px solid rgba(255,186,46,.19);border-radius:var(--r);padding:12px 14px;margin:14px 0;font-size:12px;line-height:1.6;color:#c8a04e}
+.honest strong{color:var(--ylw)}
+.honest a{color:var(--ylw);text-decoration:underline}
+
+/* DASH */
+#pg-dash{display:none;min-height:100vh}
+#pg-dash.on{display:block}
+.dash{display:flex;min-height:100vh}
+.sb{width:210px;background:var(--s1);border-right:1px solid var(--bd);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50;transition:transform .24s}
+@media(max-width:720px){.sb{transform:translateX(-100%)}.sb.open{transform:none}.dm{margin-left:0!important;padding:14px!important}.mb{display:flex!important}}
+.mb{display:none;align-items:center;justify-content:space-between;padding:11px 15px;background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:40}
+.sb-top{padding:14px 14px 10px;border-bottom:1px solid var(--bd)}
+.sb-lr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sbic{width:30px;height:30px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.sbtx{font-size:15px;font-weight:900}
+.back{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--mut2);cursor:pointer;padding:5px 9px;border-radius:8px;transition:all .2s;border:1px solid var(--bd2)}
+.back:hover{color:var(--txt);background:var(--s2)}
+.scc{margin:9px 9px 5px;background:rgba(31,214,112,.06);border:1px solid rgba(31,214,112,.14);border-radius:9px;padding:9px 10px;display:flex;align-items:center;gap:8px}
+.sdw{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--grn);box-shadow:0 0 5px var(--grn);animation:pulse 2s ease-in-out infinite}
+.sdw.off{background:var(--mut);box-shadow:none;animation:none}
+.sci{flex:1;overflow:hidden}
+.scn{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scs{font-size:10px;font-weight:600;color:var(--grn)}.scs.off{color:var(--red)}
+.sbs{font-size:9px;font-weight:800;letter-spacing:1.7px;color:var(--mut);padding:9px 14px 3px;text-transform:uppercase}
+.ni{display:flex;align-items:center;gap:9px;padding:7px 14px;font-size:12px;font-weight:600;color:var(--mut2);cursor:pointer;border-left:2px solid transparent;transition:all .14s;user-select:none}
+.ni:hover{background:var(--s2);color:var(--txt)}
+.ni.on{background:rgba(91,142,255,.07);color:var(--acc);border-left-color:var(--acc)}
+.ni .nic{font-size:14px;width:17px;text-align:center}
+.ni .nbdg{background:var(--acc);color:#fff;font-size:8px;font-weight:800;padding:1px 4px;border-radius:100px;margin-left:auto}
+.sbf{margin-top:auto;padding:10px 9px;border-top:1px solid var(--bd);display:flex;flex-direction:column;gap:6px}
+.bsv{width:100%;padding:8px;border-radius:var(--r);font-size:11px;font-weight:700;cursor:pointer;border:1px solid;transition:all .2s}
+.bst{background:rgba(255,77,102,.06);border-color:rgba(255,77,102,.21);color:var(--red)}.bst:hover{background:rgba(255,77,102,.13)}
+.bsr{background:rgba(31,214,112,.06);border-color:rgba(31,214,112,.21);color:var(--grn)}.bsr:hover{background:rgba(31,214,112,.13)}
+.dm{margin-left:210px;flex:1;padding:26px 30px;min-height:100vh}
+.pnl{display:none;animation:fadeUp .23s ease both}.pnl.on{display:block}
+.pt{font-size:22px;font-weight:900;letter-spacing:-.35px;margin-bottom:3px}
+.ps{font-size:12px;color:var(--mut2);margin-bottom:22px}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:20px;margin-bottom:16px}
+.ch{font-size:13px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:7px;letter-spacing:-.08px}
+.ch small{font-size:10px;font-weight:600;color:var(--mut)}
+.stg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.stc{background:var(--s1);border:1px solid var(--bd);border-radius:11px;padding:14px}
+.stl{font-size:9px;font-weight:800;letter-spacing:1.2px;color:var(--mut);text-transform:uppercase;margin-bottom:5px}
+.stv{font-size:24px;font-weight:900;letter-spacing:-.25px}
+.sts{font-size:10px;color:var(--mut);margin-top:2px}
+.cb{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:border-color .2s}
+.cb:hover{border-color:var(--acc)}
+.cb .cl{font-family:var(--m);font-size:12px;font-weight:600;flex:1;word-break:break-all}
+.cb .cl small{display:block;font-size:9px;font-weight:700;letter-spacing:.9px;color:var(--mut);font-family:var(--f);margin-bottom:2px;text-transform:uppercase}
+.cpi{color:var(--mut);font-size:16px;flex-shrink:0;transition:color .2s}.cb:hover .cpi{color:var(--acc)}
+.ha{background:rgba(255,186,46,.05);border:1px solid rgba(255,186,46,.19);border-left:3px solid var(--ylw);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;font-size:12px;line-height:1.65;color:#bfa04d}
+.ha strong{color:var(--ylw);font-weight:800}
+.ha a{color:var(--ylw)}
+.fgr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:540px){.fgr{grid-template-columns:1fr}}
+.fg2{display:flex;flex-direction:column;gap:4px}
+.fg2 label{font-size:11px;font-weight:700;color:var(--mut2)}
+.fi2,.fs2{background:var(--s2);border:1.5px solid var(--bd2);border-radius:var(--r);padding:9px 12px;font-size:12px;color:var(--txt);outline:none;transition:border-color .2s;width:100%}
+.fi2:focus,.fs2:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(91,142,255,.08)}
+.fs2 option{background:#181b26}
+.bp{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:var(--r);padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.bp:hover{opacity:.9;transform:translateY(-1px)}
+.bd{background:rgba(255,77,102,.07);color:var(--red);border:1px solid rgba(255,77,102,.21);border-radius:var(--r);padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.bd:hover{background:rgba(255,77,102,.13)}
+.bn{background:var(--s2);color:var(--txt);border:1px solid var(--bd2);border-radius:var(--r);padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.bn:hover{border-color:var(--acc);color:var(--acc)}
+.br{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.tr{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(37,42,61,.7)}
+.tr:last-child{border-bottom:none}
+.ti .tt{font-weight:700;font-size:12px}.ti .td{font-size:11px;color:var(--mut);margin-top:2px}
+.tog{width:38px;height:21px;background:var(--bd2);border-radius:100px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.tog.on{background:var(--grn)}
+.tog::after{content:'';position:absolute;width:15px;height:15px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tog.on::after{left:20px}
+.pt2{width:100%;border-collapse:collapse}
+.pt2 th{text-align:left;font-size:9px;font-weight:800;letter-spacing:1.1px;color:var(--mut);text-transform:uppercase;padding:6px 9px;border-bottom:1px solid var(--bd)}
+.pt2 td{padding:10px 9px;font-size:12px;border-bottom:1px solid rgba(37,42,61,.4);vertical-align:middle}
+.pt2 tr:last-child td{border-bottom:none}
+.pt2 tr:hover td{background:var(--s2)}
+.pn{font-weight:700;display:flex;align-items:center;gap:7px}
+.pa{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.rb{font-size:9px;font-weight:800;padding:2px 7px;border-radius:100px;border:1px solid;white-space:nowrap}
+.rb-admin{background:rgba(255,77,102,.07);border-color:rgba(255,77,102,.3);color:var(--red)}
+.rb-mod{background:rgba(91,142,255,.07);border-color:rgba(91,142,255,.3);color:var(--acc)}
+.rb-builder{background:rgba(29,212,232,.07);border-color:rgba(29,212,232,.3);color:var(--cyn)}
+.rb-vip{background:rgba(124,93,250,.1);border-color:rgba(124,93,250,.3);color:#b0a0ff}
+.rb-player{background:rgba(82,92,124,.07);border-color:rgba(82,92,124,.24);color:var(--mut2)}
+.ab{background:var(--s2);border:1px solid var(--bd);color:var(--mut2);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .14s;font-family:var(--f);margin-right:3px}
+.ab:hover{color:var(--txt);border-color:var(--bd2)}
+.ab.d:hover{color:var(--red);border-color:rgba(255,77,102,.34);background:rgba(255,77,102,.04)}
+.bi{display:flex;align-items:center;gap:9px;padding:10px 13px;background:rgba(255,77,102,.03);border:1px solid rgba(255,77,102,.1);border-radius:var(--r);margin-bottom:6px}
+.bnm{font-weight:700;font-size:12px}.brs{font-size:10px;color:var(--mut);margin-top:1px}
+.unb{background:none;border:1px solid var(--bd2);color:var(--mut);border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--f);transition:all .2s}
+.unb:hover{color:var(--grn);border-color:rgba(31,214,112,.39)}
+.em{text-align:center;padding:32px 18px}
+.em .ei{font-size:30px;margin-bottom:9px}
+.em p{color:var(--mut);font-size:12px;line-height:1.6}
+.conb{background:#040608;border:1px solid var(--bd);border-radius:11px;padding:12px 14px;font-family:var(--m);font-size:11px;line-height:1.8;max-height:280px;overflow-y:auto;margin-bottom:10px}
+.cl-i{color:#5b8fff}.cl-ok{color:var(--grn)}.cl-w{color:var(--ylw)}.cl-e{color:var(--red)}.cl-d{color:var(--mut)}.cl-u{color:var(--txt)}
+.conr{display:flex;gap:6px}
+#con-in{flex:1;background:#040608;border:1px solid var(--bd);border-radius:var(--r);padding:8px 12px;font-family:var(--m);font-size:11px;color:var(--txt);outline:none}
+#con-in:focus{border-color:var(--acc)}
+.bcon{background:var(--s2);border:1px solid var(--bd2);color:var(--txt);border-radius:var(--r);padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;transition:all .14s}
+.bcon:hover{border-color:var(--acc)}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.pcc{background:var(--s2);border:1px solid var(--bd2);border-radius:var(--r);padding:12px}
+.pcn{font-weight:800;font-size:12px;margin-bottom:3px}
+.pcd{font-size:10px;color:var(--mut);line-height:1.5}
+.pct{font-size:8px;font-weight:800;padding:2px 5px;border-radius:100px;border:1px solid;margin-bottom:6px;display:inline-block}
+
+/* AI */
+.aiw{display:flex;flex-direction:column;height:calc(100vh - 110px);min-height:460px;background:var(--s1);border:1px solid var(--bd);border-radius:16px;overflow:hidden}
+.aih{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:11px;flex-shrink:0}
+.aiav{width:36px;height:36px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;box-shadow:0 0 16px rgba(91,142,255,.2)}
+.ainm{font-size:14px;font-weight:800}
+.aist{font-size:10px;color:var(--grn);font-weight:600;display:flex;align-items:center;gap:4px}
+.aist::before{content:'';width:4px;height:4px;background:var(--grn);border-radius:50%;box-shadow:0 0 4px var(--grn)}
+.aibdg{margin-left:auto;background:rgba(91,142,255,.1);border:1px solid rgba(91,142,255,.19);border-radius:100px;padding:2px 9px;font-size:9px;font-weight:800;color:#96aeff;letter-spacing:.3px}
+.aic2{padding:8px 13px;border-bottom:1px solid var(--bd);display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
+.chip{background:var(--s2);border:1px solid var(--bd2);border-radius:100px;padding:4px 11px;font-size:10px;font-weight:600;color:var(--mut2);cursor:pointer;transition:all .14s;white-space:nowrap}
+.chip:hover{border-color:var(--acc);color:var(--acc);background:rgba(91,142,255,.05)}
+.aim{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:11px}
+.msg{display:flex;gap:8px;max-width:100%}
+.mav{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;align-self:flex-start;margin-top:2px}
+.msg-ai .mav{background:linear-gradient(135deg,var(--acc),var(--acc2))}
+.msg-u .mav{background:var(--s3);border:1px solid var(--bd2)}
+.msg-u{flex-direction:row-reverse}
+.bub{max-width:78%;padding:10px 13px;border-radius:13px;font-size:12px;line-height:1.65}
+.msg-ai .bub{background:var(--s2);border:1px solid var(--bd);border-radius:3px 13px 13px 13px;color:var(--txt)}
+.msg-u .bub{background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:13px 3px 13px 13px;color:#fff}
+.bub strong{font-weight:700}.bub em{font-style:italic;color:var(--mut2)}
+.bub code{background:rgba(0,0,0,.3);padding:1px 5px;border-radius:4px;font-family:var(--m);font-size:10px}
+.bub ul,.bub ol{padding-left:14px;margin:4px 0}.bub li{margin-bottom:2px}
+.cbw{margin:8px 0;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:8px;overflow:hidden}
+.cbt{display:flex;align-items:center;justify-content:space-between;padding:6px 11px;border-bottom:1px solid rgba(255,255,255,.04);background:rgba(0,0,0,.18)}
+.cbl{font-size:9px;font-weight:700;color:var(--mut);font-family:var(--m);letter-spacing:.4px}
+.cbc{background:none;border:none;color:var(--mut);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--f);transition:color .2s;padding:0}
+.cbc:hover{color:var(--acc)}
+.cbw pre{padding:11px;margin:0;font-family:var(--m);font-size:10px;overflow-x:auto;line-height:1.7;white-space:pre;color:#b4dfb4}
+.typ{display:flex;gap:4px;align-items:center;padding:11px 13px;background:var(--s2);border:1px solid var(--bd);border-radius:3px 13px 13px 13px;width:fit-content}
+.td{width:5px;height:5px;background:var(--mut);border-radius:50%;animation:tdot 1.3s ease-in-out infinite}
+.td:nth-child(2){animation-delay:.17s}.td:nth-child(3){animation-delay:.34s}
+@keyframes tdot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-5px);opacity:1}}
+.aiir{padding:11px 14px;border-top:1px solid var(--bd);display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
+#ai-in{flex:1;background:var(--s2);border:1.5px solid var(--bd2);border-radius:11px;padding:10px 13px;font-size:12px;color:var(--txt);outline:none;resize:none;min-height:40px;max-height:120px;line-height:1.52;transition:border-color .2s}
+#ai-in:focus{border-color:var(--acc)}
+.bsnd{width:40px;height:40px;background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;box-shadow:0 3px 12px rgba(91,142,255,.28)}
+.bsnd:hover{transform:scale(1.05)}
+
+.toast{position:fixed;bottom:18px;right:18px;background:var(--s1);border:1px solid var(--bd2);border-radius:var(--r);padding:10px 15px;font-size:12px;font-weight:700;z-index:9999;display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(7px);transition:all .21s;box-shadow:0 7px 24px rgba(0,0,0,.36);pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.toast.g{border-left:3px solid var(--grn)}.toast.r{border-left:3px solid var(--red)}.toast.b{border-left:3px solid var(--acc)}
+</style>
+</head>
+<body>
+<div class="bg"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+
+<!-- AUTH -->
+<div class="page on" id="pg-auth" style="display:flex;min-height:100vh">
+  <div class="auth-w">
+    <div class="auth-logo">
+      <div class="aic">⚡</div>
+      <h1>EaglerHost</h1>
+      <p>Minecraft server management</p>
+    </div>
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <button class="auth-tab on" id="tab-login" onclick="swTab('login')">Log In</button>
+        <button class="auth-tab" id="tab-signup" onclick="swTab('signup')">Sign Up</button>
+      </div>
+      <div class="auth-err" id="auth-err"></div>
+      <div id="form-login">
+        <div class="fg"><label>Username</label><input class="fi" id="l-user" type="text" placeholder="Your username" autocomplete="username"></div>
+        <div class="fg"><label>Password</label><input class="fi" id="l-pass" type="password" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="btn-full" onclick="doLogin()">Log In →</button>
+        <div class="auth-note">Don't have an account? <span onclick="swTab('signup')">Sign up free</span></div>
+      </div>
+      <div id="form-signup" style="display:none">
+        <div class="fg"><label>Username</label><input class="fi" id="s-user" type="text" placeholder="Choose a username" autocomplete="username"></div>
+        <div class="fg"><label>Email <span style="color:var(--mut);font-weight:400">(optional)</span></label><input class="fi" id="s-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+        <div class="fg"><label>Password</label><input class="fi" id="s-pass" type="password" placeholder="At least 6 characters" autocomplete="new-password"></div>
+        <div class="fg"><label>Confirm Password</label><input class="fi" id="s-pass2" type="password" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSignup()"></div>
+        <button class="btn-full" onclick="doSignup()">Create Account →</button>
+        <div class="auth-note">Already have an account? <span onclick="swTab('login')">Log in</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="page" id="pg-home">
+  <div class="topbar">
+    <div class="topbar-logo"><div class="tic">⚡</div>EaglerHost</div>
+    <div class="topbar-right">
+      <div class="user-chip" id="user-chip">
+        <div class="uav" id="uav" style="background:#5b8eff">?</div>
+        <span id="unm">User</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Log out</button>
+    </div>
+  </div>
+  <div class="home-body">
+    <div class="home-hd">
+      <div>
+        <h2 id="greet-h">Welcome back!</h2>
+        <p id="greet-s">Manage your servers below.</p>
+      </div>
+    </div>
+    <div class="stats-r">
+      <div class="sp"><span class="ic">🖥️</span><div><div class="sv" id="st-tot">0</div><div class="sl">Total Servers</div></div></div>
+      <div class="sp"><span class="ic">🟢</span><div><div class="sv" id="st-on">0</div><div class="sl">Running</div></div></div>
+      <div class="sp"><span class="ic">👥</span><div><div class="sv" id="st-pl2">0</div><div class="sl">Total Players</div></div></div>
+    </div>
+    <div class="sec-h">Your Servers</div>
+    <div class="srv-grid" id="srv-grid"></div>
+  </div>
+</div>
+
+<!-- CREATE MODAL -->
+<div class="modal-bg" id="modal-cr">
+  <div class="modal">
+    <button class="modal-close" onclick="closeMod()">✕</button>
+    <div class="modal-h">Create a New Server</div>
+    <div class="modal-s">Pick a unique name.</div>
+    <div class="fg">
+      <label>Server Name</label>
+      <div class="nfr" id="nfr">
+        <span class="npfx">eaglerhost.gg/play/</span>
+        <input id="modal-sni" type="text" placeholder="yourserver" maxlength="22" autocomplete="off" oninput="chkN(this)">
+      </div>
+      <div class="nh" id="nh"></div>
+    </div>
+    <div class="honest">
+      <strong>📢 To make this server actually work online:</strong> You need real infrastructure. Use <a href="https://aternos.org" target="_blank">Aternos</a> (free), <a href="https://minehut.com" target="_blank">Minehut</a> (free), or rent a VPS (~€4/mo). This app manages config — the AI will help you set up hosting step-by-step.
+    </div>
+    <div class="fg">
+      <label>Gamemode</label>
+      <select class="fi" id="cr-gm" style="background:var(--s2);border:1.5px solid var(--bd2)"><option value="survival">Survival</option><option value="creative">Creative</option><option value="adventure">Adventure</option></select>
+    </div>
+    <div class="fg">
+      <label>Difficulty</label>
+      <select class="fi" id="cr-diff" style="background:var(--s2);border:1.5px solid var(--bd2)"><option>Easy</option><option selected>Normal</option><option>Hard</option></select>
+    </div>
+    <div class="br" style="margin-top:7px">
+      <button class="bp" id="btn-cr" onclick="crSrv()" disabled>Create Server</button>
+      <button class="bn" onclick="closeMod()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASH -->
+<div class="page" id="pg-dash">
+  <div class="mb">
+    <span style="font-weight:900;font-size:14px">⚡ EaglerHost</span>
+    <button style="background:none;border:none;color:var(--txt);font-size:20px;cursor:pointer" onclick="document.getElementById('sb').classList.toggle('open')">☰</button>
+  </div>
+  <div class="dash">
+    <nav class="sb" id="sb">
+      <div class="sb-top">
+        <div class="sb-lr"><div class="sbic">⚡</div><div class="sbtx">EaglerHost</div></div>
+        <div class="back" onclick="showHome()">← All Servers</div>
+      </div>
+      <div class="scc">
+        <div class="sdw" id="d-dot"></div>
+        <div class="sci"><div class="scn" id="d-sn">server</div><div class="scs" id="d-st">Online</div></div>
+      </div>
+      <div class="sbs">Server</div>
+      <div class="ni on" onclick="dnav('overview',this)"><span class="nic">🏠</span> Overview</div>
+      <div class="ni" onclick="dnav('console',this)"><span class="nic">🖥️</span> Console</div>
+      <div class="ni" onclick="dnav('settings',this)"><span class="nic">⚙️</span> Settings</div>
+      <div class="ni" onclick="dnav('plugins',this)"><span class="nic">🧩</span> Plugins</div>
+      <div class="sbs">Players</div>
+      <div class="ni" onclick="dnav('players',this)"><span class="nic">👥</span> Players</div>
+      <div class="ni" onclick="dnav('bans',this)"><span class="nic">🔨</span> Bans</div>
+      <div class="ni" onclick="dnav('admins',this)"><span class="nic">🛡️</span> Admins</div>
+      <div class="sbs">AI</div>
+      <div class="ni" id="ni-ai" onclick="dnav('ai',this)"><span class="nic">🤖</span> AI <span class="nbdg">CLAUDE</span></div>
+      <div class="sbf">
+        <button class="bsv bst" id="btn-stop" onclick="togS()">⏹ Stop</button>
+        <button class="bsv bsr" id="btn-start" onclick="togS()" style="display:none">▶ Start</button>
+      </div>
+    </nav>
+    <div class="dm">
+      <!-- OVERVIEW -->
+      <div class="pnl on" id="pnl-overview">
+        <div class="pt">Overview</div>
+        <div class="ps" id="ov-sub">Manage your server.</div>
+        <div class="ha">
+          <strong>🖥️ To go live:</strong> Host on <a href="https://aternos.org" target="_blank">Aternos</a> (free), install EaglerXServer plugin, set online-mode=false. Ask AI: <em>"How do I host this on Aternos?"</em> for step-by-step.
+        </div>
+        <div class="stg">
+          <div class="stc"><div class="stl">Status</div><div class="stv" id="s-st" style="font-size:14px;color:var(--grn)">🟢 Online</div></div>
+          <div class="stc"><div class="stl">Players</div><div class="stv" id="s-pl">0</div><div class="sts" id="s-mx">/ 20</div></div>
+          <div class="stc"><div class="stl">Uptime</div><div class="stv" id="s-up" style="font-family:var(--m);font-size:17px">00:00</div></div>
+          <div class="stc"><div class="stl">Version</div><div class="stv" style="font-size:14px">1.12.2</div></div>
+        </div>
+        <div class="card">
+          <div class="ch">🔗 Server Address</div>
+          <p style="font-size:11px;color:var(--mut2);margin-bottom:10px">Share this — works once hosted on real infrastructure.</p>
+          <div class="cb" onclick="cpAddr()">
+            <div class="cl"><small>WebSocket Address</small><span id="addr">wss://eaglerhost.gg/play/server</span></div>
+            <span class="cpi">⎘</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch">🤖 Quick AI Actions</div>
+          <div class="br">
+            <button class="bn" onclick="qai('Set creative mode')">Creative</button>
+            <button class="bn" onclick="qai('Enable PvP')">PvP ON</button>
+            <button class="bn" onclick="qai('Write full EssentialsX config')">EssentialsX</button>
+            <button class="bn" onclick="qai('How do I host this on Aternos for free? Give me every step.')">Host FREE</button>
+          </div>
+        </div>
+      </div>
+      <!-- CONSOLE -->
+      <div class="pnl" id="pnl-console">
+        <div class="pt">Console</div><div class="ps">Run commands.</div>
+        <div class="conb" id="conb">
+          <div class="cl-i">[EaglerHost] Server loaded</div>
+          <div class="cl-ok">[Server] Ready</div>
+        </div>
+        <div class="conr">
+          <input id="con-in" type="text" placeholder="op Steve  /  ban griefer  /  gamemode creative" onkeydown="if(event.key==='Enter')runCmd()">
+          <button class="bcon" onclick="runCmd()">Run</button>
+        </div>
+      </div>
+      <!-- SETTINGS -->
+      <div class="pnl" id="pnl-settings">
+        <div class="pt">Settings</div><div class="ps">Configure server.</div>
+        <div class="card">
+          <div class="ch">⚙️ General</div>
+          <div class="fgr">
+            <div class="fg2"><label>MOTD</label><input class="fi2" id="s-motd" value="My Server"></div>
+            <div class="fg2"><label>Max Players</label><input class="fi2" type="number" id="s-maxp" value="20" min="1" max="500"></div>
+            <div class="fg2"><label>Mode</label><select class="fs2" id="s-gm"><option value="survival">Survival</option><option value="creative">Creative</option><option value="adventure">Adventure</option></select></div>
+            <div class="fg2"><label>Difficulty</label><select class="fs2" id="s-diff"><option>Easy</option><option selected>Normal</option><option>Hard</option></select></div>
+          </div>
+          <button class="bp" onclick="saveSt()">Save</button>
+        </div>
+        <div class="card">
+          <div class="ch">🔧 Toggles</div>
+          <div class="tr"><div class="ti"><div class="tt">PvP</div><div class="td">Players fight</div></div><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="tr"><div class="ti"><div class="tt">Whitelist</div><div class="td">Only approved</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+          <div class="tr"><div class="ti"><div class="tt">Command Blocks</div><div class="td">Enable blocks</div></div><div class="tog on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="tr"><div class="ti"><div class="tt">Flight</div><div class="td">Don't kick flyers</div></div><div class="tog" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+      <!-- PLUGINS -->
+      <div class="pnl" id="pnl-plugins">
+        <div class="pt">Plugins</div><div class="ps">Recommended. Ask AI to write configs.</div>
+        <div class="card"><div class="ch">🧩 Library</div><div class="pg" id="pg"></div></div>
+        <div class="card">
+          <div class="ch">🤖 AI Generator</div>
+          <div class="br">
+            <button class="bn" onclick="qai('Write full EssentialsX config with economy and homes')">EssentialsX</button>
+            <button class="bn" onclick="qai('Write LuckPerms groups with Owner, Admin, Mod, Player')">LuckPerms</button>
+            <button class="bn" onclick="qai('Write WorldGuard config to stop griefing')">WorldGuard</button>
+          </div>
+        </div>
+      </div>
+      <!-- PLAYERS -->
+      <div class="pnl" id="pnl-players">
+        <div class="pt">Players</div><div class="ps">Manage online.</div>
+        <div class="card">
+          <div class="ch">👥 Online <small id="p-ct">(0)</small></div>
+          <div class="em" id="p-em"><div class="ei">😴</div><p>No players online.</p></div>
+          <table class="pt2" id="p-tb" style="display:none"><thead><tr><th>Player</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="p-body"></tbody></table>
+        </div>
+        <div class="card">
+          <div class="ch">➕ Add Test</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <input class="fi2" id="ap-n" placeholder="Username" style="max-width:180px">
+            <button class="bp" onclick="addP()">Add</button>
+          </div>
+        </div>
+      </div>
+      <!-- BANS -->
+      <div class="pnl" id="pnl-bans">
+        <div class="pt">Bans</div><div class="ps">Block players.</div>
+        <div class="card">
+          <div class="ch">🔨 Ban</div>
+          <div class="fgr">
+            <div class="fg2"><label>Name</label><input class="fi2" id="bn-n" placeholder="Username"></div>
+            <div class="fg2"><label>Reason</label><input class="fi2" id="bn-r" placeholder="Griefing..."></div>
+          </div>
+          <button class="bd" onclick="doBan()">Ban</button>
+        </div>
+        <div class="card"><div class="ch">📋 List <small id="ban-ct">(0)</small></div><div id="ban-list"><div class="em"><div class="ei">✅</div><p>No bans.</p></div></div></div>
+      </div>
+      <!-- ADMINS -->
+      <div class="pnl" id="pnl-admins">
+        <div class="pt">Admins</div><div class="ps">Give permissions.</div>
+        <div class="card">
+          <div class="ch">🛡️ Assign</div>
+          <div class="fgr">
+            <div class="fg2"><label>Name</label><input class="fi2" id="adm-n" placeholder="Username"></div>
+            <div class="fg2"><label>Role</label><select class="fs2" id="adm-r"><option value="admin">Admin</option><option value="mod">Mod</option><option value="builder">Builder</option><option value="vip">VIP</option></select></div>
+          </div>
+          <button class="bp" onclick="doAdm()">Assign</button>
+        </div>
+        <div class="card"><div class="ch">👑 Roles</div><div id="adm-list"><div class="em"><div class="ei">🛡️</div><p>No roles.</p></div></div></div>
+      </div>
+      <!-- AI -->
+      <div class="pnl" id="pnl-ai">
+        <div class="pt">AI Assistant</div>
+        <div class="ps">Claude-powered. Ask anything.</div>
+        <div class="aiw">
+          <div class="aih">
+            <div class="aiav">🤖</div>
+            <div><div class="ainm">EaglerAI</div><div class="aist">Claude · Ready</div></div>
+            <div class="aibdg">CLAUDE AI</div>
+          </div>
+          <div class="aic2">
+            <span class="chip" onclick="ask('Give Steve admin')">Give admin</span>
+            <span class="chip" onclick="ask('Ban griefer')">Ban</span>
+            <span class="chip" onclick="ask('How do I host this on Aternos for free? Step by step.')">Host FREE</span>
+            <span class="chip" onclick="ask('Write full Spigot plugin that gives starter kit')">Custom plugin</span>
+            <span class="chip" onclick="ask('Write EssentialsX config')">EssentialsX</span>
+            <span class="chip" onclick="ask('What plugins for survival?')">Plugin advice</span>
+          </div>
+          <div class="aim" id="aim">
+            <div class="msg msg-ai">
+              <div class="mav">🤖</div>
+              <div class="bub">
+                Hey! I'm <strong>EaglerAI</strong> powered by Claude. I can configure settings, write plugin code, write full configs, and explain how to host for free. Ask <em>"How do I host on Aternos?"</em> for real steps.
+              </div>
+            </div>
+          </div>
+          <div class="aiir">
+            <textarea id="ai-in" placeholder="Ask anything…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI()}" oninput="ar(this)"></textarea>
+            <button class="bsnd" onclick="sendAI()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="t-ic">✓</span><span id="t-msg">Done</span></div>
+
+<script>
+const TK=['minecraft','eaglercraft','epiccraft','test','admin','null','default','server','pvp','skyblock','survival','hub'];
+const CO=['#5b8eff','#7c5dfa','#1fd670','#ffba2e','#ff4d66','#1dd4e8','#ec4899','#f97316'];
+const rc=()=>CO[Math.floor(Math.random()*CO.length)];
+const PL=[
+  {n:'EaglerXServer',d:'WebSocket bridge',t:'Core',tc:'var(--acc)',bc:'rgba(91,142,255,.1)',ec:'rgba(91,142,255,.24)'},
+  {n:'EssentialsX',d:'/home, /kit, economy',t:'Essential',tc:'var(--grn)',bc:'rgba(31,214,112,.08)',ec:'rgba(31,214,112,.21)'},
+  {n:'AuthMe',d:'Password login',t:'Security',tc:'var(--red)',bc:'rgba(255,77,102,.07)',ec:'rgba(255,77,102,.19)'},
+  {n:'LuckPerms',d:'Ranks & perms',t:'Essential',tc:'var(--grn)',bc:'rgba(31,214,112,.08)',ec:'rgba(31,214,112,.21)'},
+  {n:'WorldGuard',d:'Anti-grief',t:'Protection',tc:'var(--ylw)',bc:'rgba(255,186,46,.06)',ec:'rgba(255,186,46,.17)'},
+  {n:'WorldEdit',d:'Terrain editor',t:'Building',tc:'var(--cyn)',bc:'rgba(29,212,232,.07)',ec:'rgba(29,212,232,.19)'},
+  {n:'NoCheatPlus',d:'Anti-cheat',t:'Security',tc:'var(--red)',bc:'rgba(255,77,102,.07)',ec:'rgba(255,77,102,.19)'},
+  {n:'SkinsRestorer',d:'Custom skins',t:'Cosmetic',tc:'#b0a0ff',bc:'rgba(124,93,250,.08)',ec:'rgba(124,93,250,.19)'},
+];
+
+function gDB(){return JSON.parse(localStorage.getItem('eh_users')||'{}')}
+function sDB(d){localStorage.setItem('eh_users',JSON.stringify(d))}
+function cU(){return localStorage.getItem('eh_session')||null}
+function sSes(u){localStorage.setItem('eh_session',u)}
+function clSes(){localStorage.removeItem('eh_session')}
+
+function swTab(t){
+  document.getElementById('tab-login').classList.toggle('on',t==='login');
+  document.getElementById('tab-signup').classList.toggle('on',t==='signup');
+  document.getElementById('form-login').style.display=t==='login'?'block':'none';
+  document.getElementById('form-signup').style.display=t==='signup'?'block':'none';
+  shErr('');
+}
+
+function shErr(m){const e=document.getElementById('auth-err');e.textContent=m;e.classList.toggle('on',!!m)}
+
+function doLogin(){
+  const u=document.getElementById('l-user').value.trim(),p=document.getElementById('l-pass').value;
+  if(!u||!p){shErr('Fill all fields.');return}
+  const db=gDB();
+  if(!db[u]){shErr('No account found.');return}
+  if(db[u].password!==btoa(p)){shErr('Wrong password.');return}
+  sSes(u);enter(u);
+}
+
+function doSignup(){
+  const u=document.getElementById('s-user').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,''),
+        e=document.getElementById('s-email').value.trim(),
+        p=document.getElementById('s-pass').value,
+        p2=document.getElementById('s-pass2').value;
+  if(!u||!p){shErr('Username and password required.');return}
+  if(u.length<3){shErr('Username 3+ chars.');return}
+  if(p.length<6){shErr('Password 6+ chars.');return}
+  if(p!==p2){shErr('Passwords don\'t match.');return}
+  const db=gDB();
+  if(db[u]){shErr(`"${u}" taken.`);return}
+  db[u]={password:btoa(p),email:e,servers:[],created:Date.now()};
+  sDB(db);sSes(u);enter(u);
+  toast(`Account created! Welcome, ${u}!`,'g','✓');
+}
+
+function doLogout(){clSes();shPg('pg-auth');toast('Logged out','b','👋')}
+
+function enter(u){
+  document.getElementById('unm').textContent=u;
+  document.getElementById('greet-h').textContent=`Welcome, ${u}!`;
+  document.getElementById('greet-s').textContent=`You have ${gUS(u).length} server(s).`;
+  const av=document.getElementById('uav');av.textContent=u[0].toUpperCase();av.style.background=CO[u.charCodeAt(0)%CO.length];
+  shPg('pg-home');rHome(u);
+}
+
+function gUS(u){const db=gDB();return db[u]?.servers||[]}
+function sUS(u,s){const db=gDB();if(db[u])db[u].servers=s;sDB(db)}
+
+function rHome(u){
+  const s=gUS(u),g=document.getElementById('srv-grid');
+  document.getElementById('st-tot').textContent=s.length;
+  document.getElementById('st-on').textContent=s.filter(x=>x.online).length;
+  document.getElementById('st-pl2').textContent=s.reduce((a,x)=>a+(x.players||0),0);
+  g.innerHTML=s.map((x,i)=>`
+    <div class="sc" onclick="opSrv(${i})">
+      <div class="sst">
+        <div class="sdot ${x.online?'on':'off'}"></div>
+        <span style="color:${x.online?'var(--grn)':'var(--mut)'}">${x.online?'Online':'Offline'}</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--mut);font-weight:600">${x.gm||'survival'}</span>
+      </div>
+      <div class="sn">${x.name}</div>
+      <div class="sa">wss://eaglerhost.gg/play/${x.name}</div>
+      <div class="sm">
+        <span>👥 ${x.players||0}</span>
+        <span>🔨 ${(x.bans||[]).length}</span>
+        <span>🛡️ ${(x.admins||[]).length}</span>
+      </div>
+    </div>`).join('')+`<div class="add-sc" onclick="opMod()"><div class="aic2">➕</div><p>Create Server</p></div>`;
+}
+
+let mnT;
+function opMod(){document.getElementById('modal-cr').classList.add('on');document.getElementById('modal-sni').value='';document.getElementById('nh').textContent='';document.getElementById('nfr').className='nfr';document.getElementById('btn-cr').disabled=true}
+function closeMod(){document.getElementById('modal-cr').classList.remove('on')}
+function chkN(i){
+  let v=i.value.toLowerCase().replace(/[^a-z0-9_-]/g,'');i.value=v;
+  const nfr=document.getElementById('nfr'),nh=document.getElementById('nh'),btn=document.getElementById('btn-cr');
+  btn.disabled=true;
+  if(!v){nfr.className='nfr';nh.textContent='';return}
+  if(v.length<3){nfr.className='nfr err';nh.textContent='✗ 3+ chars';nh.className='nh nh-err';return}
+  nh.textContent='Checking…';nh.className='nh nh-chk';nfr.className='nfr';
+  clearTimeout(mnT);mnT=setTimeout(()=>{
+    const u=cU(),s=gUS(u);
+    if(TK.includes(v)||s.find(x=>x.name===v)){nfr.className='nfr err';nh.textContent=`✗ "${v}" taken`;nh.className='nh nh-err'}
+    else{nfr.className='nfr ok';nh.textContent=`✓ "${v}" available`;nh.className='nh nh-ok';btn.disabled=false}
+  },470);
+}
+function crSrv(){
+  const v=document.getElementById('modal-sni').value.trim(),gm=document.getElementById('cr-gm').value,diff=document.getElementById('cr-diff').value;
+  if(!v||v.length<3)return;
+  const u=cU(),s=gUS(u);
+  s.push({name:v,gm,diff,online:true,players:0,bans:[],admins:[],maxP:20,motd:'My Server',created:Date.now()});
+  sUS(u,s);closeMod();rHome(u);toast(`"${v}" created!`,'g','⚡');
+  document.getElementById('greet-s').textContent=`You have ${s.length} server(s).`;
+  document.getElementById('st-tot').textContent=s.length;
+}
+
+let cS=null,cI=-1,upT;
+
+function opSrv(i){
+  const u=cU(),s=gUS(u);
+  cS=s[i];cI=i;
+  document.getElementById('d-sn').textContent=cS.name;
+  document.getElementById('addr').textContent=`wss://eaglerhost.gg/play/${cS.name}`;
+  document.getElementById('ov-sub').textContent=`Managing "${cS.name}"`;
+  document.getElementById('s-motd').value=cS.motd||'My Server';
+  document.getElementById('s-maxp').value=cS.maxP||20;
+  document.getElementById('s-gm').value=cS.gm||'survival';
+  setSt(cS.online!==false);
+  rP();rB();rA();lPL();
+  clearInterval(upT);let up=0;
+  upT=setInterval(()=>{if(!cS?.online)return;up++;const m=String(Math.floor(up/60)).padStart(2,'0'),s=String(up%60).padStart(2,'0');document.getElementById('s-up').textContent=`${m}:${s}`},1000);
+  clAI();shPg('pg-dash');dnav('overview',null);
+  document.querySelectorAll('.ni')[0].classList.add('on');
+}
+
+function showHome(){clearInterval(upT);shPg('pg-home');rHome(cU())}
+
+function setSt(on){
+  cS.online=on;
+  document.getElementById('d-dot').className='sdw'+(on?'':' off');
+  document.getElementById('d-st').textContent=on?'Online':'Offline';
+  document.getElementById('d-st').className='scs'+(on?'':' off');
+  document.getElementById('s-st').textContent=on?'🟢 Online':'🔴 Offline';
+  document.getElementById('s-st').style.color=on?'var(--grn)':'var(--red)';
+  document.getElementById('btn-stop').style.display=on?'block':'none';
+  document.getElementById('btn-start').style.display=on?'none':'block';
+  svS();
+}
+
+function togS(){setSt(!cS.online);toast(cS.online?'Started':'Stopped',cS.online?'g':'r',cS.online?'▶':'⏹')}
+
+function svS(){const u=cU(),s=gUS(u);s[cI]=cS;sUS(u,s)}
+
+function dnav(id,el){
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  document.getElementById('pnl-'+id).classList.add('on');
+  if(el)el.classList.add('on');
+  document.getElementById('sb').classList.remove('open');
+}
+
+function clog(c,tx){const b=document.getElementById('conb'),d=document.createElement('div');d.className=c;d.textContent=tx;b.appendChild(d);b.scrollTop=b.scrollHeight}
+function runCmd(){
+  const i=document.getElementById('con-in'),c=i.value.trim();if(!c)return;
+  clog('cl-d','> '+c);i.value='';const l=c.toLowerCase();
+  setTimeout(()=>{
+    if(l.startsWith('op ')){const n=c.slice(3).trim();clog('cl-ok',`[Server] ${n} opped.`);toast(`${n} opped`,'g','⭐')}
+    else if(l.startsWith('ban ')){const p=c.slice(4).split(' ');addBanE(p[0],p.slice(1).join(' ')||'No reason');clog('cl-w',`[Server] ${p[0]} banned.`)}
+    else if(l.startsWith('kick ')){kP(c.slice(5).trim())}
+    else if(l==='list'){clog('cl-i',`[Server] Online: ${(cS.players_list||[]).map(p=>p.name).join(', ')||'none'}`)}
+    else{clog('cl-ok','[Server] Done.')}
+  },230);
+}
+
+function addP(){
+  const n=document.getElementById('ap-n').value.trim();if(!n){toast('Enter name','r','!');return}
+  if(!cS.players_list)cS.players_list=[];
+  if(cS.players_list.find(p=>p.name===n)){toast('Already online','r','!');return}
+  cS.players_list.push({name:n,color:rc(),joined:new Date().toLocaleTimeString()});
+  cS.players=(cS.players_list||[]).length;
+  svS();rP();document.getElementById('ap-n').value='';toast(`${n} joined`,'g','👤');
+}
+function rP(){
+  const pl=cS.players_list||[],em=document.getElementById('p-em'),tb=document.getElementById('p-tb'),bd=document.getElementById('p-body');
+  document.getElementById('p-ct').textContent=`(${pl.length})`;
+  document.getElementById('s-pl').textContent=pl.length;
+  if(!pl.length){em.style.display='block';tb.style.display='none';return}
+  em.style.display='none';tb.style.display='table';
+  bd.innerHTML=pl.map(p=>{const ar=(cS.admins||[]).find(a=>a.name===p.name),role=ar?ar.role:'player';return`<tr><td><span class="pn"><span class="pa" style="background:${p.color}">${p.name[0].toUpperCase()}</span>${p.name}</span></td><td><span class="rb rb-${role}">${role}</span></td><td style="color:var(--mut);font-size:10px">${p.joined}</td><td><button class="ab" onclick="document.getElementById('adm-n').value='${p.name}';dnav('admins',null)">Role</button><button class="ab" onclick="kP('${p.name}')">Kick</button><button class="ab d" onclick="qkB('${p.name}')">Ban</button></td></tr>`}).join('');
+}
+function kP(n){if(!cS.players_list)return;cS.players_list=cS.players_list.filter(p=>p.name!==n);cS.players=(cS.players_list||[]).length;svS();rP();toast(`${n} kicked`,'b','👢')}
+function qkB(n){kP(n);addBanE(n,'Via player list')}
+
+function doBan(){const n=document.getElementById('bn-n').value.trim(),r=document.getElementById('bn-r').value.trim()||'No reason';if(!n){toast('Enter name','r','!');return}if((cS.bans||[]).find(b=>b.name===n)){toast('Already banned','r','!');return}kP(n);addBanE(n,r);document.getElementById('bn-n').value='';document.getElementById('bn-r').value='';clog('cl-w',`[Server] ${n} banned: ${r}`)}
+function addBanE(name,reason){if(!cS.bans)cS.bans=[];if(cS.bans.find(b=>b.name===name))return;cS.bans.push({name,reason,date:new Date().toLocaleDateString()});svS();rB();toast(`${name} banned`,'r','🔨')}
+function rB(){const l=document.getElementById('ban-list'),b=cS.bans||[];document.getElementById('ban-ct').textContent=`(${b.length})`;if(!b.length){l.innerHTML='<div class="em"><div class="ei">✅</div><p>No bans.</p></div>';return}l.innerHTML=b.map(x=>`<div class="bi"><span style="font-size:17px">🔨</span><div style="flex:1"><div class="bnm">${x.name}</div><div class="brs">${x.reason} · ${x.date}</div></div><button class="unb" onclick="doUnb('${x.name}')">Unban</button></div>`).join('')}
+function doUnb(n){cS.bans=(cS.bans||[]).filter(b=>b.name!==n);svS();rB();toast(`${n} unbanned`,'g','✓')}
+
+function doAdm(){const n=document.getElementById('adm-n').value.trim(),r=document.getElementById('adm-r').value;if(!n){toast('Enter name','r','!');return}if(!cS.admins)cS.admins=[];const ex=cS.admins.findIndex(a=>a.name===n);if(ex!==-1)cS.admins[ex].role=r;else cS.admins.push({name:n,role:r,color:rc()});svS();rA();rP();document.getElementById('adm-n').value='';toast(`${n} → ${r}`,'g','🛡️')}
+function rA(){const l=document.getElementById('adm-list'),a=cS.admins||[];if(!a.length){l.innerHTML='<div class="em"><div class="ei">🛡️</div><p>No roles.</p></div>';return}l.innerHTML=a.map(x=>`<div class="bi" style="background:rgba(91,142,255,.03);border-color:rgba(91,142,255,.1)"><span class="pa" style="background:${x.color};width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:11px">${x.name[0].toUpperCase()}</span><div style="flex:1;margin-left:8px"><div class="bnm">${x.name}</div><div class="brs"><span class="rb rb-${x.role}">${x.role}</span></div></div><button class="unb" onclick="remR('${x.name}')">Remove</button></div>`).join('')}
+function remR(n){cS.admins=(cS.admins||[]).filter(a=>a.name!==n);svS();rA();rP()}
+
+function saveSt(){cS.motd=document.getElementById('s-motd').value;cS.maxP=parseInt(document.getElementById('s-maxp').value)||20;cS.gm=document.getElementById('s-gm').value;cS.diff=document.getElementById('s-diff').value;document.getElementById('s-mx').textContent=`/ ${cS.maxP}`;svS();toast('Settings saved','g','✓')}
+
+function lPL(){document.getElementById('pg').innerHTML=PL.map(p=>`<div class="pcc"><span class="pct" style="color:${p.tc};background:${p.bc};border-color:${p.ec}">${p.t}</span><div class="pcn">${p.n}</div><div class="pcd">${p.d}</div></div>`).join('')}
+
+function cpAddr(){navigator.clipboard.writeText(document.getElementById('addr').textContent).catch(()=>{});toast('Copied!','g','⎘')}
+
+let aiH=[];
+function clAI(){aiH=[];const b=document.getElementById('aim');b.innerHTML='<div class="msg msg-ai"><div class="mav">🤖</div><div class="bub">Hey! I\'m <strong>EaglerAI</strong> powered by Claude. Ask anything.</div></div>'}
+
+function locA(msg){
+  const adm=msg.match(/give\s+(\S+)\s+(admin|mod|builder|vip)/i)||msg.match(/make\s+(\S+)\s+(?:an?\s+)?(admin|mod|builder|vip)/i);
+  if(adm&&cS){const n=adm[1],r=adm[2].toLowerCase();if(!cS.admins)cS.admins=[];const ex=cS.admins.findIndex(a=>a.name===n);if(ex!==-1)cS.admins[ex].role=r;else cS.admins.push({name:n,role:r,color:rc()});svS();rA();rP();clog('cl-ok',`[Perms] ${n} → ${r}`);return}
+  const ban=msg.match(/^ban\s+(\S+)(?:\s+for\s+(.+))?$/i);if(ban&&cS){addBanE(ban[1],ban[2]||'No reason');kP(ban[1]);return}
+  const uban=msg.match(/unban\s+(\S+)/i);if(uban&&cS){doUnb(uban[1]);return}
+  const kick=msg.match(/kick\s+(\S+)/i);if(kick&&cS){kP(kick[1]);return}
+  const gm=msg.match(/(creative|survival|adventure)\s*mode|set.*?(creative|survival|adventure)/i);if(gm&&cS){const v=(gm[1]||gm[2]).toLowerCase();cS.gm=v;document.getElementById('s-gm').value=v;svS();clog('cl-ok',`[Settings] Mode → ${v}`);return}
+  const mp=msg.match(/(?:set|max)\s+(?:players?|slots?).*?(\d+)|(\d+)\s+(?:player|slot)/i);if(mp&&cS){const n=parseInt(mp[1]||mp[2]);cS.maxP=n;document.getElementById('s-maxp').value=n;document.getElementById('s-mx').textContent=`/ ${n}`;svS();clog('cl-ok',`[Settings] Max → ${n}`);return}
+}
+
+function sysP(){
+  const s=cS;
+  return`You are EaglerAI, AI for EaglerHost.
+
+${s?`Current: "${s.name}" at wss://eaglerhost.gg/play/${s.name}
+Online: ${s.online?'yes':'no'} | Players: ${(s.players_list||[]).map(p=>p.name).join(', ')||'none'} | Bans: ${(s.bans||[]).map(b=>b.name).join(', ')||'none'} | Admins: ${(s.admins||[]).map(a=>`${a.name}(${a.role})`).join(', ')||'none'} | Mode: ${s.gm||'survival'} | Max: ${s.maxP||20}`:'No server.'}
+
+HONESTY: This is a management UI, NOT real hosting. The wss:// addresses are mock. To actually host:
+1. Aternos.org (free) — Spigot 1.12.2, install EaglerXServer, set online-mode=false
+2. Minehut.com (free) — same
+3. VPS (Hetzner ~€4/mo, Oracle free tier) — real 24/7
+
+When asked about hosting, give REAL step-by-step. Don't pretend this app hosts it.
+
+For code: write COMPLETE Java Spigot plugins with imports. For configs: write FULL files. Always use markdown code blocks with language tags.
+
+Be direct. Use markdown.`}
+
+async function callCl(msg){
+  aiH.push({role:'user',content:msg});
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sysP(),messages:aiH})});
+    const data=await res.json();
+    const text=data.content?.map(c=>c.type==='text'?c.text:'').join('')||'Error — try again!';
+    aiH.push({role:'assistant',content:text});
+    if(aiH.length>20)aiH=aiH.slice(-20);
+    return text;
+  }catch(e){return "Can't reach Claude. Your controls still work!"}
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function rMD(t){
+  return t
+    .replace(/```(\w+)?\n([\s\S]*?)```/g,(_,l,c)=>`<div class="cbw"><div class="cbt"><span class="cbl">${l||'code'}</span><button class="cbc" onclick="cpC(this)">Copy</button></div><pre>${esc(c.trimEnd())}</pre></div>`)
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`([^`\n]+)`/g,'<code>$1</code>')
+    .replace(/^#{1,3} (.+)$/gm,'<strong style="font-size:13px;display:block;margin-top:5px">$1</strong>')
+    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g,m=>`<ul>${m}</ul>`)
+    .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+}
+function cpC(btn){navigator.clipboard.writeText(btn.closest('.cbw').querySelector('pre').textContent).catch(()=>{});btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1900);toast('Code copied!','g','⎘')}
+
+function addM(c,isU){
+  const b=document.getElementById('aim'),d=document.createElement('div');
+  d.className=`msg ${isU?'msg-u':'msg-ai'}`;
+  d.innerHTML=`<div class="mav">${isU?'😊':'🤖'}</div><div class="bub">${isU?esc(c):rMD(c)}</div>`;
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+function shT(){const b=document.getElementById('aim'),d=document.createElement('div');d.id='typing';d.className='msg msg-ai';d.innerHTML='<div class="mav">🤖</div><div class="typ"><div class="td"></div><div class="td"></div><div class="td"></div></div>';b.appendChild(d);b.scrollTop=b.scrollHeight}
+function hiT(){const t=document.getElementById('typing');if(t)t.remove()}
+
+async function ask(m){
+  dnav('ai',document.getElementById('ni-ai'));
+  addM(m,true);
+  locA(m);
+  shT();
+  const r=await callCl(m);
+  hiT();addM(r,false);
+}
+function sendAI(){const i=document.getElementById('ai-in'),m=i.value.trim();if(!m)return;i.value='';i.style.height='auto';ask(m)}
+function qai(m){dnav('ai',document.getElementById('ni-ai'));setTimeout(()=>ask(m),70)}
+function ar(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'}
+
+function shPg(id){
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('on');p.style.display='none'});
+  const pg=document.getElementById(id);
+  pg.style.display=id==='pg-auth'?'flex':id==='pg-home'?'block':'block';
+  pg.classList.add('on');
+}
+
+let tT;
+function toast(m,type,icon){clearTimeout(tT);const t=document.getElementById('toast');document.getElementById('t-msg').textContent=m;document.getElementById('t-ic').textContent=icon;t.className=`toast ${type} show`;tT=setTimeout(()=>t.classList.remove('show'),2700)}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const u=cU();
+  if(u&&gDB()[u]){enter(u)}
+  else{shPg('pg-auth')}
+});
+</script>
+</body>
+</html>
